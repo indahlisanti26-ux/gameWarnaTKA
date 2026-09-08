@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Balap Warna Super - Game Edukasi PAUD</title>
+    <style>
+        /* === RESET & BASIC STYLES === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Fredoka', 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #70e1f5 0%, #ffd194 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* === MAIN CONTAINER === */
+        #game-container {
+            width: 95vw;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 650px;
+            background: #ffffff;
+            border-radius: 25px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+            border: 6px solid #FF9800;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === UI SCREENS === */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* === TYPOGRAPHY & BUTTONS === */
+        h1 {
+            font-size: 2.5rem;
+            color: #FF5722;
+            text-shadow: 3px 3px 0px #FFEB3B;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #3F51B5;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #2E7D32, 0 10px 15px rgba(0,0,0,0.2);
+            transition: all 0.1s ease;
+            margin: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #2E7D32;
+        }
+
+        .btn-orange { background: #FF9800; box-shadow: 0 6px 0 #E65100; }
+        .btn-orange:active { box-shadow: 0 2px 0 #E65100; }
+
+        .btn-red { background: #E91E63; box-shadow: 0 6px 0 #AD1457; }
+        .btn-red:active { box-shadow: 0 2px 0 #AD1457; }
+
+        .btn-blue { background: #2196F3; box-shadow: 0 6px 0 #1565C0; }
+        .btn-blue:active { box-shadow: 0 2px 0 #1565C0; }
+
+        /* === FORM INPUTS === */
+        .form-group {
+            margin: 10px 0;
+            width: 80%;
+            max-width: 320px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            border: 3px solid #FFB74D;
+            border-radius: 15px;
+            text-align: center;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #FF9800;
+            background-color: #FFFDE7;
+        }
+
+        /* === GAMEPLAY ELEMENTS === */
+        .header-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #FFF9C4;
+            border-bottom: 4px solid #FBC02D;
+        }
+
+        .player-info {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #E65100;
+        }
+
+        /* RACETRACK AREA */
+        .track-container {
+            width: 100%;
+            background: #616161;
+            padding: 15px 10px;
+            margin: 10px 0;
+            border-radius: 15px;
+            position: relative;
+            box-shadow: inset 0 0 10px #000;
+            border: 4px dashed #FFF;
+        }
+
+        .lane {
+            height: 50px;
+            position: relative;
+            margin: 5px 0;
+            border-bottom: 2px dashed #FFF;
+            display: flex;
+            align-items: center;
+        }
+
+        .lane:last-child { border-bottom: none; }
+
+        .finish-line {
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            width: 25px;
+            background: repeating-linear-gradient(
+                0deg,
+                #000, #000 10px,
+                #fff 10px, #fff 20px
+            );
+            border-radius: 3px;
+        }
+
+        .car {
+            font-size: 2.2rem;
+            position: absolute;
+            left: 10px;
+            transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.4));
+        }
+
+        /* COLOR TARGET & OPTIONS */
+        .question-box {
+            background: #E8F5E9;
+            border: 3px solid #81C784;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .target-card {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            border: 4px solid #FFF;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .options-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
+            border: 5px solid #FFF;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FFF;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .color-option:active {
+            transform: scale(0.9);
+        }
+
+        /* === RESPONSIVE DESIGN FOR MOBILE/TABLET/IFP === */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+            .btn { font-size: 1.1rem; padding: 10px 20px; }
+            .color-option { width: 70px; height: 70px; }
+            .target-card { width: 55px; height: 55px; }
+            .car { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <!-- 1. HALAMAN LOGIN -->
+    <div id="screen-login" class="screen active">
+        <h1>🏎️ BALAP WARNA SUPER 🎨</h1>
+        <p style="color: #666; margin-bottom: 20px; font-size: 1.1rem;">Game Edukasi Mengenal & Menyamakan Warna</p>
+        
+        <div class="form-group">
+            <label for="player-name">Nama Pembalap:</label>
+            <input type="text" id="player-name" placeholder="Ketik namamu..." maxlength="12">
+        </div>
+        
+        <div class="form-group">
+            <label for="player-class">Kelas / Group:</label>
+            <input type="text" id="player-class" placeholder="Contoh: PAUD A" maxlength="10">
+        </div>
+
+        <button class="btn btn-orange" onclick="submitLogin()" style="margin-top: 20px;">
+            Mulai Balapan! 🚀
+        </button>
+    </div>
+
+    <!-- 2. HALAMAN MENU UTAMA & PILIH LEVEL -->
+    <div id="screen-menu" class="screen">
+        <h2 id="welcome-text">Halo Pembalap!</h2>
+        <p style="font-size: 1.2rem; color: #555; margin-bottom: 15px;">Pilih Level Kesulitanmu:</p>
+
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 350px;">
+            <button class="btn" onclick="startGame(1)">🌱 Level 1: Mudahnya Warna!</button>
+            <button class="btn btn-orange" onclick="startGame(2)">⭐ Level 2: Makin Jago!</button>
+            <button class="btn btn-red" onclick="startGame(3)">🏆 Level 3: Juara Balap!</button>
+        </div>
+
+        <button class="btn btn-blue" onclick="showScreen('screen-login')" style="margin-top: 20px; font-size: 1rem; padding: 8px 20px;">
+            👤 Ganti Profil
+        </button>
+    </div>
+
+    <!-- 3. HALAMAN GAMEPLAY BALAPAN -->
+    <div id="screen-game" class="screen" style="justify-content: flex-start; padding: 0;">
+        <div class="header-bar">
+            <div class="player-info" id="game-player-info">Nama (Kelas)</div>
+            <button class="btn btn-red" onclick="goToMenu()" style="font-size: 0.9rem; padding: 6px 12px; margin: 0;">
+                🏠 Menu Utama
+            </button>
+        </div>
+
+        <div style="padding: 10px 15px; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <!-- LINTASAN BALAP -->
+            <div class="track-container">
+                <div class="finish-line"></div>
+                <!-- Mobil Pemain -->
+                <div class="lane">
+                    <div id="player-car" class="car">🏎️</div>
+                </div>
+                <!-- Mobil Musuh -->
+                <div class="lane">
+                    <div id="rival-car" class="car">🚗</div>
+                </div>
+            </div>
+
+            <!-- INSTRUKSI / SOAL -->
+            <div class="question-box">
+                <div id="instruction-text" style="font-size: 1.2rem; font-weight: bold; color: #2E7D32;">
+                    Samakan Warna Ini!
+                </div>
+                <div id="target-color-box" class="target-card">🚗</div>
+            </div>
+
+            <!-- PILIHAN WARNA -->
+            <div id="options-container" class="options-grid">
+                <!-- Tombol warna di-generate oleh JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. HALAMAN HASIL / KEMENANGAN -->
+    <div id="screen-result" class="screen">
+        <h1 style="font-size: 3rem;">🎉 HEBAT! 🎉</h1>
+        <div style="font-size: 5rem; margin: 10px 0;">🏆</div>
+        <h2 id="result-message">Kamu Menang!</h2>
+        <p id="result-detail" style="font-size: 1.2rem; color: #555; margin-bottom: 20px;"></p>
+
+        <div>
+            <button class="btn" onclick="replayGame()">🔄 Main Lagi</button>
+            <button class="btn btn-orange" onclick="showScreen('screen-menu')">🏁 Pilih Level</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* ==========================================================================
+       DATA WARNA & VARIABEL GLOBAL
+       ========================================================================== */
+    const COLOR_DATABASE = [
+        { name: "MERAH", hex: "#F44336" },
+        { name: "BIRU", hex: "#2196F3" },
+        { name: "KUNING", hex: "#FFEB3B" },
+        { name: "HIJAU", hex: "#4CAF50" },
+        { name: "JINGGA", hex: "#FF9800" },
+        { name: "UNGU", hex: "#9C27B0" },
+        { name: "MERAH MUDA", hex: "#E91E63" },
+        { name: "COKELAT", hex: "#795548" }
+    ];
+
+    let playerName = "";
+    let playerClass = "";
+    let currentLevel = 1;
+    let playerProgress = 0; // 0 sampai 100%
+    let rivalProgress = 0;
+    let targetColor = null;
+    let rivalInterval = null;
+
+    /* ==========================================================================
+       AUDIO SYNTHESIS & VOICE (Tanpa File Eksternal)
+       ========================================================================== */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+        }
+    }
+
+    // Text-to-Speech untuk membantu anak PAUD yang belum lancar membaca
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Hentikan suara sebelumnya
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.9; // Agak perlahan untuk anak-anak
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    /* ==========================================================================
+       NAVIGASI SKRIN
+       ========================================================================== */
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        if (rivalInterval) clearInterval(rivalInterval);
+    }
+
+    function submitLogin() {
+        const nameInput = document.getElementById('player-name').value.trim();
+        const classInput = document.getElementById('player-class').value.trim();
+
+        if (!nameInput) {
+            alert("Halo! Masukkan namamu dulu ya 😊");
+            return;
+        }
+
+        playerName = nameInput;
+        playerClass = classInput || "PAUD";
+
+        document.getElementById('welcome-text').innerText = `Halo, ${playerName}! 🏎️`;
+        showScreen('screen-menu');
+        speakText(`Halo ${playerName}! Pilih levelmu untuk mulai balapan.`);
+    }
+
+    function goToMenu() {
+        if (rivalInterval) clearInterval(rivalInterval);
+        showScreen('screen-menu');
+    }
+
+    /* ==========================================================================
+       LOGIKA GAME & LEVEL
+       ========================================================================== */
+    function startGame(level) {
+        currentLevel = level;
+        playerProgress = 0;
+        rivalProgress = 0;
+
+        document.getElementById('game-player-info').innerText = `👤 ${playerName} (${playerClass}) - Level ${level}`;
+        showScreen('screen-game');
+        
+        updateCarsPosition();
+        nextQuestion();
+
+        // Kecepatan musuh berjalan otomatis sesuai level
+        let rivalSpeed = 3000; // Level 1 (Lambat)
+        if (level === 2) rivalSpeed = 2400;
+        if (level === 3) rivalSpeed = 1800;
+
+        rivalInterval = setInterval(() => {
+            rivalProgress += 8;
+            updateCarsPosition();
+            checkWinner();
+        }, rivalSpeed);
+    }
+
+    function nextQuestion() {
+        const optionsContainer = document.getElementById('options-container');
+        const targetBox = document.getElementById('target-color-box');
+        const instructionText = document.getElementById('instruction-text');
+        optionsContainer.innerHTML = "";
+
+        // Tentukan jumlah pilihan warna berdasarkan level
+        let optionCount = 2; // Level 1
+        if (currentLevel === 2) optionCount = 3;
+        if (currentLevel === 3) optionCount = 4;
+
+        // ACAK WARNA
+        let shuffledColors = [...COLOR_DATABASE].sort(() => 0.5 - Math.random());
+        let currentChoices = shuffledColors.slice(0, optionCount);
+        targetColor = currentChoices[Math.floor(Math.random() * currentChoices.length)];
+
+        // SET TAMPILAN SESUAI LEVEL
+        if (currentLevel === 1 || currentLevel === 2) {
+            instructionText.innerText = "Samakan Warna Ini!";
+            targetBox.style.backgroundColor = targetColor.hex;
+            targetBox.innerText = "🏎️";
+            speakText("Samakan warna ini!");
+        } else {
+            // Level 3: Menjodohkan warna berdasarkan nama warna / audio
+            instructionText.innerText = `Cari Warna: ${targetColor.name}!`;
+            targetBox.style.backgroundColor = "#FFF";
+            targetBox.innerText = "🎨";
+            speakText(`Cari warna ${targetColor.name}`);
+        }
+
+        // TAMPILKAN TOMBOL PILIHAN
+        currentChoices.forEach(color => {
+            const btn = document.createElement('div');
+            btn.className = 'color-option';
+            btn.style.backgroundColor = color.hex;
+            
+            // Tambahkan teks nama warna jika level 3
+            if (currentLevel === 3) {
+                btn.innerText = color.name;
+            }
+
+            btn.onclick = () => handleAnswer(color);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selectedColor) {
+        if (selectedColor.hex === targetColor.hex) {
+            // JAWABAN BENAR
+            playSound('correct');
+            playerProgress += 20; // Tambah maju 20%
+            updateCarsPosition();
+            
+            if (!checkWinner()) {
+                nextQuestion();
+            }
+        } else {
+            // JAWABAN SALAH
+            playSound('wrong');
+            speakText("Coba lagi ya!");
+            // Berikan efek getar visual pada pilihan yang salah
+            event.target.style.transform = "scale(0.8)";
+            setTimeout(() => {
+                event.target.style.transform = "scale(1)";
+            }, 200);
+        }
+    }
+
+    function updateCarsPosition() {
+        const playerCar = document.getElementById('player-car');
+        const rivalCar = document.getElementById('rival-car');
+
+        // Batasi nilai max 90% agar tidak melewati batas garis finish
+        let pPos = Math.min(playerProgress, 90);
+        let rPos = Math.min(rivalProgress, 90);
+
+        playerCar.style.left = `calc(${pPos}% + 10px)`;
+        rivalCar.style.left = `calc(${rPos}% + 10px)`;
+    }
+
+    function checkWinner() {
+        if (playerProgress >= 90) {
+            clearInterval(rivalInterval);
+            playSound('win');
+            document.getElementById('result-message').innerText = `Hore! ${playerName} Menang! 🎉`;
+            document.getElementById('result-detail').innerText = `Kamu berhasil menyelesaikan Level ${currentLevel} dengan sangat cepat!`;
+            speakText(`Hore! Selamat ${playerName}, kamu menang!`);
+            showScreen('screen-result');
+            return true;
+        } else if (rivalProgress >= 90) {
+            clearInterval(rivalInterval);
+            playSound('wrong');
+            document.getElementById('result-message').innerText = `Hampir Menang! 🚗`;
+            document.getElementById('result-detail').innerText = `Mobil merah lebih dulu sampai. Boleh coba lagi ya!`;
+            speakText(`Ayo coba lagi ${playerName}, kamu pasti bisa!`);
+            showScreen('screen-result');
+            return true;
+        }
+        return false;
+    }
+
+    function replayGame() {
+        startGame(currentLevel);
+    }
+</script>
+
+</body>
+</html>
